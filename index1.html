@@ -1,0 +1,219 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="lua">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Rosa Server Side</title>
+        <!-- Include Monaco Editor from CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.30.1/min/vs/loader.js"></script>
+        <style>
+            body {
+                background-color: #333;
+                color: white;
+                font-family: "Times New Roman", Times, serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                opacity: 0;
+                transition: opacity 0.3s ease-in-out;
+                position: relative; /* Make the body a positioning context */
+            }
+
+            h1 {
+                font-family: "Times New Roman", Times, serif;
+                margin-bottom: 20px;
+            }
+
+            #logo {
+                position: absolute; /* Position the logo relative to the body */
+                top: 30px;
+                left: 850px;
+                width: 200px; /* Adjust the width as needed */
+                height: auto; /* Maintain aspect ratio */
+                z-index: 1; /* Place the logo above other elements */
+            }
+
+            .rounded-editor {
+                background-color: #444;
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+                width: 80%;
+                max-width: 800px;
+                height: 60vh;
+                z-index: 0; /* Ensure the editor is behind the logo */
+            }
+
+            .button-container {
+                margin-top: 10px;
+                display: flex;
+                gap: 10px;
+            }
+
+            /* Updated button styling */
+            .button-container button {
+                font-family: "Times New Roman", Times, serif;
+                background-color: #444;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <img id="logo" src="logo.png" alt="Rosa">
+        <div id="luaEditor" class="rounded-editor"></div>
+        <div id="suggestions" class="suggestions-container"></div>
+        <div class="button-container">
+            <button onclick="executeCode()">Execute</button>
+            <button onclick="clearEditor()">Clear</button>
+        </div>
+
+        <script>
+            // Load the Monaco Editor loader
+            require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.30.1/min/vs' } });
+            require(['vs/editor/editor.main'], function() {
+                // Create a Monaco Editor instance
+                var editor = monaco.editor.create(document.getElementById('luaEditor'), {
+                    value: "-- Your Lua code goes here",
+                    language: 'lua',
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    roundedSelection: true,
+                    scrollBeyondLastLine: false,
+                    scrollbar: {
+                        vertical: 'visible',
+                        horizontal: 'visible',
+                    },
+                });
+
+                // Register a basic completion provider
+                monaco.languages.registerCompletionItemProvider('lua', {
+                    provideCompletionItems: function (model, position) {
+                        return {
+                            suggestions: [
+                                {
+                                    label: 'print',
+                                    kind: monaco.languages.CompletionItemKind.Function,
+                                    insertText: 'print("")',
+                                    range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column)
+                                },
+                                {
+                                    label: 'function',
+                                    kind: monaco.languages.CompletionItemKind.Snippet,
+                                    insertText: 'function name()\n  -- your code\nend',
+                                    range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column)
+                                },
+                                {
+                                    label: 'if',
+                                    kind: monaco.languages.CompletionItemKind.Keyword,
+                                    insertText: 'if condition then\n  -- your code\nend',
+                                    range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column)
+                                },
+                                {
+                                    label: 'for',
+                                    kind: monaco.languages.CompletionItemKind.Keyword,
+                                    insertText: 'for i = 1, 10 do\n  -- your code\nend',
+                                    range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column)
+                                },
+                                {
+                                    label: 'while',
+                                    kind: monaco.languages.CompletionItemKind.Keyword,
+                                    insertText: 'while condition do\n  -- your code\nend',
+                                    range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column)
+                                },
+                                {
+                                    label: 'loadstring',
+                                    kind: monaco.languages.CompletionItemKind.Function,
+                                    insertText: 'loadstring("your_lua_code_here")()',
+                                    range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column)
+                                },
+                                {
+                                    label: 'wait',
+                                    kind: monaco.languages.CompletionItemKind.Function,
+                                    insertText: 'wait(seconds)',
+                                    detail: 'Waits for a specified number of seconds',
+                                    documentation: 'wait(seconds: number) -> void',
+                                    sortText: '002'
+                                },
+                                // Objects
+                                {
+                                    label: 'game',
+                                    kind: monaco.languages.CompletionItemKind.Module,
+                                    insertText: 'game',
+                                    detail: 'The root object of the game',
+                                    documentation: '',
+                                    sortText: '003'
+                                },
+                                {
+                                    label: 'workspace',
+                                    kind: monaco.languages.CompletionItemKind.Module,
+                                    insertText: 'workspace',
+                                    detail: 'The workspace object',
+                                    documentation: '',
+                                    sortText: '004'
+                                },
+                                // Libraries
+                                {
+                                    label: 'math',
+                                    kind: monaco.languages.CompletionItemKind.Module,
+                                    insertText: 'math',
+                                    detail: 'The math library',
+                                    documentation: '',
+                                    sortText: '005'
+                                },
+                                {
+                                    label: 'table',
+                                    kind: monaco.languages.CompletionItemKind.Module,
+                                    insertText: 'table',
+                                    detail: 'The table library',
+                                    documentation: '',
+                                    sortText: '006'
+                                },
+                                // Add more suggestions as needed
+                            ]
+                        };
+                    }
+                });
+
+                document.body.style.opacity = 1;
+
+                window.executeCode = function () {
+                // Get the content from the Monaco Editor
+                var editorContent = editor.getValue();
+
+                // Execute your code logic here
+                alert("Executing code");
+
+                // Make a GET request (replace the URL with your actual endpoint)
+                var url = 'https://api.example.com/your-endpoint?code=' + encodeURIComponent(editorContent);
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.text();
+                    })
+                    .then(data => {
+                        console.log('GET Request successful!');
+                        console.log('Response:', data);
+                    })
+                    .catch(error => {
+                        console.error('GET Request failed. Error:', error);
+                    });
+            };
+
+                // Function to clear editor content
+                window.clearEditor = function () {
+                    editor.setValue("");
+                };
+            });
+        </script>
+    </body>
+    </html>
